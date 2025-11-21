@@ -64,7 +64,7 @@ async def add_expense(date, amount, category, subcategory="", note=""):
 async def list_expenses(startdate, enddate):
     """List the expenses for given date from the expense table"""
     try:
-        with aiosqlite.connect(DB_PATH) as c:
+        async with aiosqlite.connect(DB_PATH) as c:
             cur = await c.execute(
                 """
                 SELECT id, date, amount, category, subcategory, note 
@@ -76,7 +76,8 @@ async def list_expenses(startdate, enddate):
             )
 
             cols = [d[0] for d in cur.description]
-            return [dict(zip(cols, r)) for r in cur.fetchall()]
+            rows = await cur.fetchall()
+            return [dict(zip(cols, r)) for r in rows]
     except Exception as e:
         return {"status": "error", "message": f"Error listing expenses: {str(e)}"}
     
@@ -84,7 +85,7 @@ async def list_expenses(startdate, enddate):
 async def summarize(startdate, enddate, category=''):
     """Summarize the expenses between dates and category"""
     try:
-        with aiosqlite.connect(DB_PATH) as c:
+        async with aiosqlite.connect(DB_PATH) as c:
             query = (
                 """
                 SELECT category, SUM(amount) as Total_Amount
@@ -101,7 +102,8 @@ async def summarize(startdate, enddate, category=''):
             cur = await c.execute(query, params)  
 
             cols = [d[0] for d in cur.description]
-            return [dict(zip(cols,r)for r in cur.fetchall())]      
+            rows = await cur.fetchall()
+            return [dict(zip(cols,r)) for r in rows]      
     except Exception as e:
         return {"status": "error", "message": f"Error summarizing expenses: {str(e)}"}    
     
